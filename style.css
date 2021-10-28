@@ -2,6 +2,14 @@ h1, p {
     font-family: Arial, Helvetica, sans-serif;
 }
 
+h1 {
+    font-size: 50px
+}
+
+p {
+    font-size: 35px;
+}
+
 #last {
     font-size: 20px;
 }
