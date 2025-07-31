@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mango Mustard Phonk Idle</title>
+  <style>
+    :root {
+      --mustard: #d8a31f;
+      --dark-bg: #1a1a1a;
+      --text-light: #f0f0f0;
+      --accent: #ffdd59;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--dark-bg);
+      color: var(--text-light);
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      background-image: url('https://i.imgur.com/xxMangoBG.jpg');
+      background-size: cover;
+      background-blend-mode: overlay;
+    }
+
+    header {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 3rem;
+      text-shadow: 2px 2px var(--mustard);
+    }
+
+    #game,
+    #ohioTab {
+      background: rgba(0, 0, 0, 0.6);
+      padding: 20px;
+      margin: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px var(--mustard);
+      width: 320px;
+    }
+
+    .stat {
+      font-size: 1.2rem;
+      margin: 8px 0;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      background: var(--mustard);
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .upgrade {
+      background: var(--accent);
+    }
+
+    footer {
+      margin-top: auto;
+      padding: 10px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Mango Mustard Phonk Idle</h1>
+    <p>Theme: Mangoes 🍋, "6 7", Mustard & Phonk 🎵</p>
+  </header>
+
+  <div id="game">
+    <div class="stat">Mangoes: <span id="mangoCount">0</span></div>
+    <div class="stat">Mangoes per second: <span id="mangoPS">0</span></div>
+    <div class="stat">Click Power: <span id="clickPower">1</span></div>
+    <button id="clickMango">Pick a Mango</button>
+    <hr />
+    <button id="upgradeClick" class="upgrade">Upgrade Mango Click (Cost: <span id="clickCost">10</span>)</button>
+    <button id="upgradeMustard" class="upgrade">Upgrade Mustard Auto (Cost: <span id="mustardCost">50</span>)</button>
+    <button id="upgradePhonk" class="upgrade">Unlock Phonk Generator (Cost: <span id="phonkCost">200</span>)</button>
+    <button id="upgrade67" class="upgrade">Unlock "6 7" Generator (Cost: <span id="sixtySevenCost">500</span>)</button>
+    <button id="togglePhonk" class="upgrade">Toggle Phonk</button>
+  </div>
+
+  <button id="prestigeBtn" style="display: none; background: #ff6699;">Eat Your Mangoes (Prestige)</button>
+
+  <div id="ohioTab" style="display: none;">
+    <h2>💼 OHIO</h2>
+    <div class="stat">Baby Oils: <span id="babyOils">0</span></div>
+    <div class="stat">2x Boosts: <span id="boostMultiplier">x1</span></div>
+    <button id="buyAutomator">Buy Automator (1 Baby Oil)</button>
+    <div class="stat">Automator Target: <span id="automatorTarget">None</span></div>
+    <select id="automatorChoice">
+      <option value="">Select Upgrade</option>
+      <option value="click">Mango Click</option>
+      <option value="mustard">Mustard Auto</option>
+      <option value="phonk">Phonk Generator</option>
+      <option value="67">"6 7" Generator</option>
+    </select>
+    <button id="toggleAutomatorsBtn">Toggle All Automators</button>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 Mango Studios</p>
+  </footer>
+
+  <audio id="mangoSound" src="mangoes.mp3" preload="auto"></audio>
+  <audio id="mustardSound" src="mustard.mp3" preload="auto"></audio>
+  <audio id="sixtySevenSound" src="67.mp3" preload="auto"></audio>
+  <audio id="phonkAudio" src="phonk.mp3" loop preload="auto"></audio>
+
+  <script>
+    const game = {
+      mango: 0,
+      mangoPS: 0,
+      clickPower: 1,
+      clickLevel: 0,
+      mustardLevel: 0,
+      phonkLevel: 0,
+      sixtySevenLevel: 0,
+      phonkPlaying: false,
+      lastUpdate: Date.now(),
+      babyOils: 0,
+      automators: [], // Array of multiple automators
+      boosts: 1,
+      endingShown: false
+    };
+    game.automatorsEnabled = true;  // default: automators enabled
+
+    const mangoCountEl = document.getElementById('mangoCount');
+    const mangoPSEl = document.getElementById('mangoPS');
+    const clickPowerEl = document.getElementById('clickPower');
+    const clickBtn = document.getElementById('clickMango');
+    const upgradeClickBtn = document.getElementById('upgradeClick');
+    const upgradeMustardBtn = document.getElementById('upgradeMustard');
+    const upgradePhonkBtn = document.getElementById('upgradePhonk');
+    const upgrade67Btn = document.getElementById('upgrade67');
+    const togglePhonkBtn = document.getElementById('togglePhonk');
+    const clickCostEl = document.getElementById('clickCost');
+    const mustardCostEl = document.getElementById('mustardCost');
+    const phonkCostEl = document.getElementById('phonkCost');
+    const sixtySevenCostEl = document.getElementById('sixtySevenCost');
+    const mangoSound = document.getElementById('mangoSound');
+    const mustardSound = document.getElementById('mustardSound');
+    const sixtySevenSound = document.getElementById('sixtySevenSound');
+    const phonkAudio = document.getElementById('phonkAudio');
+
+    const prestigeBtn = document.getElementById('prestigeBtn');
+    const babyOilsEl = document.getElementById('babyOils');
+    const boostMultiplierEl = document.getElementById('boostMultiplier');
+    const ohioTab = document.getElementById('ohioTab');
+    const buyAutomatorBtn = document.getElementById('buyAutomator');
+    const automatorChoice = document.getElementById('automatorChoice');
+    const automatorTargetEl = document.getElementById('automatorTarget');
+
+    const calcClickCost = () => Math.floor(10 * Math.pow(1.7, game.clickLevel));
+    const calcMustardCost = () => Math.floor(50 * Math.pow(1.7, game.mustardLevel));
+    const calcPhonkCost = () => Math.floor(200 * Math.pow(1.7, game.phonkLevel));
+    const calcSixtySevenCost = () => Math.floor(500 * Math.pow(1.7, game.sixtySevenLevel));
+
+    clickBtn.onclick = () => {
+      game.mango += game.clickPower;
+      playSound(mangoSound);
+      render();
+    };
+
+    upgradeClickBtn.onclick = () => {
+      const cost = calcClickCost();
+      if (game.mango >= cost) {
+        game.mango -= cost;
+        game.clickLevel++;
+        game.clickPower = Math.pow(2, game.clickLevel) * game.boosts;
+        playSound(mangoSound);
+        render();
+      }
+    };
+
+    upgradeMustardBtn.onclick = () => {
+      const cost = calcMustardCost();
+      if (game.mango >= cost) {
+        game.mango -= cost;
+        game.mustardLevel++;
+        game.mangoPS += 10 * game.mustardLevel * game.boosts;
+        playSound(mustardSound);
+        render();
+      }
+    };
+
+    upgradePhonkBtn.onclick = () => {
+      const cost = calcPhonkCost();
+      if (game.mango >= cost) {
+        game.mango -= cost;
+        game.phonkLevel++;
+        game.mangoPS += 50 * game.phonkLevel * game.boosts;
+        if (game.phonkLevel === 1 && !game.phonkPlaying) togglePhonk(); // Start sound on first unlock
+        render();
+      }
+    };
+
+    upgrade67Btn.onclick = () => {
+      const cost = calcSixtySevenCost();
+      if (game.mango >= cost) {
+        game.mango -= cost;
+        game.sixtySevenLevel++;
+        game.mangoPS += 200 * game.sixtySevenLevel * game.boosts;
+        playSound(sixtySevenSound);
+        render();
+      }
+    };
+
+    togglePhonkBtn.onclick = togglePhonk;
+
+    function togglePhonk() {
+      game.phonkPlaying = !game.phonkPlaying;
+      if (game.phonkPlaying) phonkAudio.play();
+      else phonkAudio.pause();
+      render();
+    }
+
+    function playSound(audioEl) {
+      audioEl.currentTime = 0;
+      audioEl.play();
+    }
+
+    game.totalBabyOils = 0;
+
+    prestigeBtn.onclick = () => {
+      if (game.mango >= 150000) {
+        game.babyOils += 1;
+        game.totalBabyOils += 1; // track total earned
+
+        updateBoosts();
+        // reset progress
+        game.mango = 0;
+        game.mangoPS = 0;
+        game.clickPower = 1;
+        game.clickLevel = 0;
+        game.mustardLevel = 0;
+        game.phonkLevel = 0;
+        game.sixtySevenLevel = 0;
+
+        ohioTab.style.display = "block";
+        render();
+      }
+    };
+
+    function updateBoosts() {
+      game.boosts = Math.pow(2, game.totalBabyOils);
+    }
+
+    buyAutomatorBtn.onclick = () => {
+      const choice = automatorChoice.value;
+      if (game.babyOils >= 1 && choice && !game.automators.includes(choice)) {
+        game.babyOils -= 1;
+        game.automators.push(choice);
+        render();
+      }
+    };
+
+    function getButtonLabel(base, level) {
+      return level < 1 ? `Unlock ${base}` : `Upgrade ${base}`;
+    }
+
+    function render() {
+      mangoCountEl.textContent = Math.floor(game.mango);
+      mangoPSEl.textContent = game.mangoPS.toFixed(2);
+      clickPowerEl.textContent = game.clickPower;
+      clickCostEl.textContent = calcClickCost();
+      mustardCostEl.textContent = calcMustardCost();
+      phonkCostEl.textContent = calcPhonkCost();
+      sixtySevenCostEl.textContent = calcSixtySevenCost();
+
+      upgradeClickBtn.textContent = `${getButtonLabel("Mango Click", game.clickLevel)} (Cost: ${calcClickCost()})`;
+      upgradeMustardBtn.textContent =
+        `${getButtonLabel("Mustard Auto", game.mustardLevel)} (Cost: ${calcMustardCost()})`;
+      upgradePhonkBtn.textContent = `${getButtonLabel("Phonk Generator", game.phonkLevel)} (Cost: ${calcPhonkCost()})`;
+      upgrade67Btn.textContent =
+        `${getButtonLabel('"6 7" Generator', game.sixtySevenLevel)} (Cost: ${calcSixtySevenCost()})`;
+
+      upgradeClickBtn.disabled = game.mango < calcClickCost();
+      upgradeMustardBtn.disabled = game.mango < calcMustardCost();
+      upgradePhonkBtn.disabled = game.mango < calcPhonkCost();
+      upgrade67Btn.disabled = game.mango < calcSixtySevenCost();
+      togglePhonkBtn.disabled = game.phonkLevel === 0;
+
+      prestigeBtn.style.display = game.mango >= 150000 ? 'block' : 'none';
+      babyOilsEl.textContent = game.babyOils;
+      boostMultiplierEl.textContent = `x${game.boosts}`;
+      automatorTargetEl.textContent = game.automators.length > 0 ? game.automators.join(", ") : "None";
+
+      if (game.mango >= 1e30 && !game.endingShown) {
+        game.endingShown = true;
+        alert("You win Mango Mustard Phonk Idle. 🍋💦");
+      }
+
+      toggleAutomatorsBtn.textContent = game.automatorsEnabled ? "Disable All Automators" : "Enable All Automators";
+    }
+
+    function update() {
+  const now = Date.now();
+  const delta = (now - game.lastUpdate) / 1000;
+  game.lastUpdate = now;
+  game.mango += game.mangoPS * delta;
+
+  if (game.automatorsEnabled) {
+    const autoThreshold = game.mango / 2;
+
+    for (const auto of game.automators) {
+  if (auto === 'click' && calcClickCost() <= autoThreshold) upgradeClickBtn.onclick();
+  else if (auto === 'mustard' && calcMustardCost() <= autoThreshold) upgradeMustardBtn.onclick();
+  else if (auto === 'phonk' && calcPhonkCost() <= autoThreshold) upgradePhonkBtn.onclick();
+  else if (auto === '67' && calcSixtySevenCost() <= autoThreshold) upgrade67Btn.onclick();
+}
+  }
+
+  render();
+  requestAnimationFrame(update);
+}
+
+const toggleAutomatorsBtn = document.getElementById('toggleAutomatorsBtn');
+
+toggleAutomatorsBtn.onclick = () => {
+  game.automatorsEnabled = !game.automatorsEnabled;
+  toggleAutomatorsBtn.textContent = game.automatorsEnabled ? "Disable All Automators" : "Enable All Automators";
+};
+
+    render();
+    update();
+  </script>
+</body>
+
+</html>
